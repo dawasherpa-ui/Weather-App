@@ -1,113 +1,205 @@
-import Image from 'next/image'
+"use client";
 
-export default function Home() {
+import { useLocation } from "@/context/Context";
+import { Box, Typography } from "@mui/material";
+import Image from "next/image";
+import Link from "next/link";
+import React from "react";
+import { useEffect, useState } from "react";
+
+function Page() {
+  const [ipAddress, setIpAddress] = useState();
+  const [greeting, setGreeting] = useState("Good Morning");
+  const [weather, setWeather] = useState(null);
+  const { location, setGlobalLocation } = useLocation();
+  const iconCode = weather?.weather[0].icon;
+
+  // Define a function to map icon codes to corresponding image paths
+  const getIconPath = (code) => {
+    switch (code) {
+      case "01d":
+      case "01n":
+        return "clear.png";
+      case "02d":
+      case "02n":
+        return "clouds.png";
+      case "03d":
+      case "03n":
+        return "clouds.png";
+      case "04d":
+      case "04n":
+        return "clouds.png";
+      case "09d":
+      case "09n":
+        return "drizzle.png";
+      case "10d":
+      case "10n":
+        return "rain.png";
+      case "11d":
+      case "11n":
+        return "rain.png";
+      case "13d":
+      case "13n":
+        return "snow.png";
+      case "50d":
+      case "50n":
+        return "mist.png";
+      default:
+        return "clear.png";
+    }
+  };
+
+  const iconSource = `/images/${getIconPath(iconCode)}`;
+
+  const fetchApiData = async () => {
+    try {
+      const res = await fetch(`https://api64.ipify.org?format=json`);
+      if (!res.ok) {
+        throw new Error("Failed to fetch IP address");
+      }
+      const data = await res.json();
+      setIpAddress(data.ip);
+    } catch (error) {
+      console.error("Error fetching IP address:", error.message);
+    }
+  };
+
+  const fetchWeather = async () => {
+    try {
+      const res = await fetch(
+        `https://api.openweathermap.org/data/2.5/weather?lat=${location[0]}&lon=${location[1]}&appid=18c792bbce0ce978661f277bff28ac0f`
+      );
+      if (!res.ok) {
+        throw new Error("Failed to fetch weather data");
+      }
+      const data = await res.json();
+      setWeather(data);
+      console.log(data);
+    } catch (error) {
+      console.error("Error fetching weather data:", error.message);
+    }
+  };
+
+  const fetchLocation = async (loc) => {
+    try {
+      const res = await fetch(`https://ipapi.co/${loc}/json/`);
+      if (!res.ok) {
+        throw new Error("Failed to fetch location data");
+      }
+      const data = await res.json();
+      console.log(data);
+      const { latitude, longitude, country_name: country } = data;
+      setGlobalLocation([latitude, longitude, country, greeting]);
+    } catch (error) {
+      console.error("Error fetching location data:", error.message);
+    }
+  };
+  function getGreeting() {
+    const currentTime = new Date();
+    const currentHour = currentTime.getHours();
+
+    if (currentHour < 12) {
+      return "Good Morning";
+    } else {
+      return "Good Afternoon";
+    }
+  }
+  useEffect(() => {
+    if (location === null) {
+      fetchApiData();
+      const greet = getGreeting();
+      setGreeting(greet);
+    }
+  }, [location]);
+
+  useEffect(() => {
+    if (ipAddress && location === null) {
+      fetchLocation(ipAddress);
+    }
+  }, [ipAddress, location]);
+
+  useEffect(() => {
+    if (location?.length === 4) {
+      fetchWeather();
+    }
+  }, [location]);
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">app/page.js</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
-
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px] z-[-1]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800 hover:dark:bg-opacity-30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Explore starter templates for Next.js.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-  )
+    <Box className="home" sx={{height:"100%",width:"100%",display:"flex",alignItems:"center",background:"linear-gradient(90deg, rgba(34,193,195,1) 0%, rgba(253,187,45,1) 100%)",color:"white",py:{xs:3,md:2}}}>
+      {location && location.length === 4 ? (
+        <Box sx={{ p: 3 }}>
+          <Box>
+            <Typography variant="h1" sx={{ fontSize: "4.5vw" }}>
+              {location[3]}
+            </Typography>
+            <Typography variant="h1" sx={{ fontSize: "6vw" }}>
+              Let's see Weather of {location[2] || "your Country"}.
+            </Typography>
+          </Box>
+          {weather && (
+            <Box sx={{ display: "grid", placeItems: "center" }}>
+              <Box
+                sx={{
+                  display: "grid",
+                  placeItems: "center",
+                  p: 3,
+                  width: { xs: "75%", md: "60%" },
+                  gridTemplateColumns: "1fr 1fr 1fr ",
+                  gridTemplateRows: "1fr 1fr",
+                }}
+              >
+                <Box sx={{ gridColumn: "1/4", display: "flex",flexDirection:{xs:"column",md:"row"} }}>
+                  <Image
+                    src={iconSource}
+                    height={100}
+                    width={100}
+                    alt="Weather Icon"
+                  />
+                  <Box>
+                    <Typography variant="h4" sx={{fontSize:{xs:"4vw",md:"32px"}}}>
+                      {weather?.name},{location[2]}
+                    </Typography>
+                    <Typography variant="h5" sx={{fontSize:{xs:"3.2vw",md:"26px"}}}>
+                      {weather?.weather[0].main}
+                    </Typography>
+                  </Box>
+                </Box>
+                <Box sx={{ display: "flex", flexDirection: "column",alignItems:"center" }}>
+                  <Typography variant="h5" sx={{fontSize:{xs:"4vw",md:"26px"}}}>Temp</Typography>
+                  <Typography
+                    variant="h3"
+                    sx={{ fontSize: { xs: "4.5vw", md: "36px" } }}
+                  >
+                    {Math.floor(weather.main.temp - 273.15)}&deg;C
+                  </Typography>
+                </Box>
+                <Box sx={{ display: "flex", flexDirection: "column",alignItems:"center" }}>
+                  <Typography variant="h5" sx={{fontSize:{xs:"4vw",md:"26px"}}}>Humidity</Typography>
+                  <Typography
+                    variant="h3"
+                    sx={{ fontSize: { xs: "4.5vw", md: "36px" } }}
+                  >
+                    {weather?.main.humidity}%
+                  </Typography>
+                </Box>
+                <Box sx={{ display: "flex", flexDirection: "column",alignItems:"center" }}>
+                  <Typography variant="h5" sx={{fontSize:{xs:"4vw",md:"26px"}}}>Wind</Typography>
+                  <Typography
+                    variant="h3"
+                    sx={{ fontSize: { xs: "4.5vw", md: "36px" } }}
+                  >
+                    {weather?.wind.speed}km/hr
+                  </Typography>
+                </Box>
+              </Box>
+              <Box>
+                <Link href={`/${weather?.id}`}><Typography variant="h5" sx={{"&:hover":{textDecoration:"underline"}}}>View Details</Typography></Link>
+              </Box>
+            </Box>
+          )}
+        </Box>
+      ) : null}
+    </Box>
+  );
 }
+export default Page;
+
